@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Кейс-аналитик – ЕГЭ Обществознание</title>
+  <style>
+    /* --- ПЕРЕМЕННЫЕ И ТЕМЫ --- */
+    :root {
+      --bg-main: #f0f4f8;
+      --bg-surface: #ffffff;
+      --bg-splash: #ffffff;
+      --text-main: #111827;
+      --text-muted: #4b5563;
+      --accent: #1e5b9f; 
+      --accent-soft: #e0f2fe;
+      --success: #10b981;
+      --success-bg: rgba(16, 185, 129, 0.2);
+      --error: #ef4444;
+      --error-bg: rgba(239, 68, 68, 0.15);
+      --border: #e5e7eb;
+      
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+    }
+
+    [data-theme="dark"] {
+      --bg-main: #0f172a;
+      --bg-surface: #1e293b;
+      --bg-splash: #0f172a;
+      --text-main: #f9fafb;
+      --text-muted: #9ca3af;
+      --accent: #3b82f6;
+      --accent-soft: rgba(59, 130, 246, 0.2);
+      --success: #10b981;
+      --success-bg: rgba(16, 185, 129, 0.25);
+      --error: #ef4444;
+      --error-bg: rgba(239, 68, 68, 0.25);
+      --border: #374151;
+    }
+
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      -webkit-tap-highlight-color: transparent; 
+      word-break: normal;
+      overflow-wrap: break-word; 
+    }
+
+    /* АГРЕССИВНЫЙ ФИКС СКРОЛЛА */
+    html, body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.5;
+      position: fixed; 
+      top: 0; left: 0; right: 0; bottom: 0;
+      width: 100%; height: 100%;
+      overflow: hidden; 
+      overscroll-behavior: none; 
+      touch-action: none; 
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    svg { width: 1.5rem; height: 1.5rem; fill: currentColor; flex-shrink: 0; }
+
+    /* --- ЗАСТАВКА --- */
+    #splash-screen {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: var(--bg-splash); z-index: 9999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 20px; text-align: center;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+    #splash-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+    
+    .splash-icon { width: min(80px, 12vh); height: min(80px, 12vh); color: var(--accent); margin-bottom: min(1.5rem, 3vh); }
+    .splash-title { font-size: clamp(1.5rem, 6vw, 2.5rem); font-weight: 800; margin-bottom: min(1rem, 2vh); line-height: 1.2; text-transform: uppercase;}
+    .splash-desc { font-size: clamp(0.85rem, 3.5vw, 1.1rem); color: var(--text-muted); margin-bottom: min(2.5rem, 4vh); max-width: 500px; }
+    .btn-start {
+      background-color: var(--accent); color: #ffffff; border: none;
+      padding: min(1rem, 2vh) min(3rem, 6vw); font-size: clamp(0.95rem, 3vw, 1.1rem); font-weight: 700;
+      border-radius: 99px; cursor: pointer; box-shadow: var(--shadow-md);
+      transition: transform 0.2s ease;
+    }
+    .btn-start:active { transform: scale(0.95); }
+
+    /* --- ИНТЕРФЕЙС --- */
+    #app-ui {
+      display: flex; flex-direction: column; height: 100%; opacity: 0; visibility: hidden;
+      transition: opacity 0.5s ease 0.2s, visibility 0.5s ease 0.2s;
+    }
+    #app-ui.visible { opacity: 1; visibility: visible; }
+
+    .header {
+      flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;
+      padding: clamp(8px, 2vh, 12px) clamp(10px, 3vw, 15px);
+      background-color: var(--bg-surface); border-bottom: 1px solid var(--border); z-index: 10;
+      gap: 10px;
+    }
+    
+    .header-info { display: flex; flex-direction: column; flex: 1; }
+    .header-title { font-size: clamp(1rem, 4vw, 1.2rem); font-weight: 800; color: var(--text-main); }
+    .header-progress { font-size: clamp(0.7rem, 3vw, 0.8rem); color: var(--accent); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; margin-top: 2px;}
+
+    .header-controls { display: flex; gap: clamp(4px, 1vw, 8px); flex-shrink: 0; }
+    .btn-icon {
+      background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-main);
+      width: clamp(32px, 8vw, 36px); height: clamp(32px, 8vw, 36px); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+      box-shadow: var(--shadow-sm); transition: transform 0.2s; flex-shrink: 0;
+    }
+    .btn-icon:active { transform: scale(0.9); }
+    .btn-nav { background-color: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+
+    /* --- РАБОЧАЯ ЗОНА --- */
+    .workspace {
+      flex: 1; 
+      display: flex; 
+      flex-direction: column; 
+      overflow: hidden;
+      background-color: var(--bg-main);
+      min-height: 0; 
+    }
+
+    /* БЛОК С ТЕКСТОМ */
+    .text-section {
+      flex: 0 0 45%; 
+      max-height: 45%;
+      background-color: var(--bg-surface);
+      border-bottom: 2px solid var(--border);
+      padding: clamp(15px, 3vh, 20px) clamp(15px, 4vw, 25px);
+      overflow-y: auto;
+      touch-action: pan-y;
+      -webkit-overflow-scrolling: touch;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+      z-index: 5;
+    }
+    
+    .text-title {
+      font-size: clamp(0.8rem, 3vw, 0.9rem);
+      font-weight: 800;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 10px;
+    }
+
+    .case-text {
+      font-size: clamp(0.95rem, 3.5vw, 1.1rem);
+      color: var(--text-main);
+      line-height: 1.6;
+    }
+
+    /* Маркеры в тексте */
+    .text-marker {
+      transition: background-color 0.4s ease, border-radius 0.2s ease, padding 0.2s ease;
+      border-radius: 4px;
+    }
+    .text-marker.highlighted {
+      background-color: var(--success-bg);
+      border-bottom: 2px solid var(--success);
+    }
+
+    /* БЛОК С ВОПРОСАМИ */
+    .questions-section {
+      flex: 1;
+      min-height: 0; 
+      padding: clamp(15px, 3vh, 20px) clamp(15px, 4vw, 25px);
+      overflow-y: auto;
+      touch-action: pan-y;
+      -webkit-overflow-scrolling: touch;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding-bottom: 60px; 
+    }
+
+    .q-card {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      transition: border-color 0.3s ease;
+      flex-shrink: 0;
+    }
+    .q-card.is-solved {
+      border-color: var(--success);
+      background-color: rgba(16, 185, 129, 0.05);
+    }
+
+    .q-header {
+      padding: clamp(12px, 2.5vh, 16px);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .q-number {
+      background-color: var(--accent-soft);
+      color: var(--accent);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .q-card.is-solved .q-number {
+      background-color: var(--success);
+      color: #fff;
+    }
+
+    .q-title {
+      font-size: clamp(0.9rem, 3.5vw, 1.05rem);
+      font-weight: 700;
+      color: var(--text-main);
+      flex: 1;
+      margin-top: 2px;
+    }
+
+    .q-icon {
+      color: var(--text-muted);
+      transition: transform 0.3s ease;
+    }
+    .q-card.is-open .q-icon { transform: rotate(180deg); }
+    
+    .q-card.is-solved .q-icon { display: none; }
+    .q-solved-mark { display: none; color: var(--success); }
+    .q-card.is-solved .q-solved-mark { display: block; }
+
+    .q-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease-out;
+      background-color: var(--bg-main);
+    }
+    .q-card.is-open .q-body {
+      max-height: 800px; 
+      border-top: 1px solid var(--border);
+    }
+
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      gap: 8px;
+    }
+
+    .option-wrapper {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .option-btn {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border);
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      font-size: clamp(0.85rem, 3.5vw, 0.95rem);
+      font-weight: 600;
+      color: var(--text-main);
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+    }
+    .option-btn:active { transform: scale(0.98); }
+    
+    .option-btn.correct {
+      background-color: var(--success);
+      color: #fff;
+      border-color: var(--success);
+    }
+    .option-btn.wrong {
+      background-color: var(--error);
+      color: #fff;
+      border-color: var(--error);
+      animation: shake 0.4s ease;
+    }
+
+    /* Подсказка эксперта */
+    .option-hint {
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      background-color: var(--error-bg);
+      color: var(--text-main);
+      border-left: 3px solid var(--error);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      font-size: clamp(0.75rem, 3vw, 0.85rem);
+      padding: 0 12px;
+      margin-left: 10px;
+    }
+    .option-hint.show {
+      max-height: 300px;
+      opacity: 1;
+      padding: 10px 12px;
+      margin-top: 4px;
+      margin-bottom: 4px;
+    }
+    .option-hint strong {
+      color: var(--error);
+      font-weight: 800;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-5px); }
+      40%, 80% { transform: translateX(5px); }
+    }
+
+    /* Экран победы */
+    .victory-overlay {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: var(--bg-surface); z-index: 50;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      opacity: 0; visibility: hidden; transition: opacity 0.5s ease;
+      text-align: center; padding: 20px;
+    }
+    .victory-overlay.active { opacity: 1; visibility: visible; }
+    .victory-icon { width: 80px; height: 80px; color: var(--success); margin-bottom: 20px; }
+    .victory-title { font-size: 1.8rem; font-weight: 800; color: var(--text-main); margin-bottom: 10px; }
+    .victory-desc { font-size: 1rem; color: var(--text-muted); margin-bottom: 30px; }
+    
+  </style>
+</head>
+<body>
+
+  <svg style="display: none;" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <symbol id="icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </symbol>
+      <symbol id="icon-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9"></polyline>
+      </symbol>
+      <symbol id="icon-check-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </symbol>
+      <symbol id="icon-moon" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M9.528 1.718a.75.75 0 01.162.819A8.97 8.97 0 009 6a9 9 0 009 9 8.97 8.97 0 003.463-.69.75.75 0 01.981.98 10.503 10.503 0 01-9.694 6.46c-5.799 0-10.5-4.701-10.5-10.5 0-4.368 2.667-8.112 6.46-9.694a.75.75 0 01.818.162z" clip-rule="evenodd"/></symbol>
+      <symbol id="icon-sun" viewBox="0 0 24 24"><path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18.75a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-1.5a.75.75 0 01.75-.75zM6.166 17.834a.75.75 0 00-1.06 1.06l1.59 1.591a.75.75 0 101.06-1.061l-1.59-1.59zM4.5 12a.75.75 0 01-.75.75H1.5a.75.75 0 010-1.5h2.25a.75.75 0 01.75.75zM6.166 6.166a.75.75 0 001.06-1.06l-1.59-1.59a.75.75 0 00-1.061 1.06l1.59 1.59z"/></symbol>
+      <symbol id="icon-maximize" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></symbol>
+      <symbol id="icon-minimize" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path></symbol>
+      <symbol id="icon-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></symbol>
+      <symbol id="icon-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></symbol>
+    </defs>
+  </svg>
+
+  <div id="splash-screen">
+    <svg class="splash-icon"><use href="#icon-search"></use></svg>
+    <h1 class="splash-title">КЕЙС-АНАЛИТИК</h1>
+    <p class="splash-desc">Симулятор 22 задания ЕГЭ. 10 эталонных задач от ФИПИ. Прочитай текст, ответь на вопросы и найди маркеры.</p>
+    <button class="btn-start" id="btn-start">Начать практику</button>
+  </div>
+
+  <div id="app-ui">
+    <header class="header">
+      <div class="header-info">
+        <div class="header-title" id="task-title-ui">Задача 1 из 10</div>
+        <div class="header-progress">Решено: <span id="score">0</span> из 4</div>
+      </div>
+      <div class="header-controls">
+        <button class="btn-icon btn-nav" id="btn-prev" title="Предыдущая задача">
+          <svg><use href="#icon-arrow-left"></use></svg>
+        </button>
+        <button class="btn-icon btn-nav" id="btn-next" title="Следующая задача">
+          <svg><use href="#icon-arrow-right"></use></svg>
+        </button>
+        <button class="btn-icon" id="btn-theme" title="Сменить тему">
+          <svg><use id="icon-theme-use" href="#icon-moon"></use></svg>
+        </button>
+        <button class="btn-icon" id="btn-fullscreen" title="На весь экран">
+          <svg><use id="icon-fullscreen-use" href="#icon-maximize"></use></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="text-section" id="text-section">
+        <div class="text-title">Условие задачи:</div>
+        <div class="case-text" id="case-text"></div>
+      </section>
+
+      <section class="questions-section" id="questions-container"></section>
+      
+      <div class="victory-overlay" id="victory-screen">
+        <svg class="victory-icon"><use href="#icon-check-circle"></use></svg>
+        <div class="victory-title">Отлично!</div>
+        <div class="victory-desc">Вы правильно проанализировали текст и ответили на все 4 вопроса. Эксперт ФИПИ поставил бы максимум баллов!</div>
+        <button class="btn-start" id="btn-victory-next">Следующая задача</button>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // --- АГРЕССИВНЫЙ ФИКС СКРОЛЛА ---
+    document.addEventListener('touchmove', function(e) {
+      if (e.touches.length > 1) return; 
+      const scrollable = e.target.closest('.text-section, .questions-section');
+      if (scrollable) {
+        const isAtTop = scrollable.scrollTop === 0;
+        const isAtBottom = scrollable.scrollHeight - scrollable.scrollTop <= scrollable.clientHeight + 1;
+        const touchY = e.touches[0].clientY;
+        const dy = touchY - (scrollable.lastTouchY || touchY);
+        scrollable.lastTouchY = touchY;
+        if ((isAtTop && dy > 0) || (isAtBottom && dy < 0)) {
+          if (e.cancelable) e.preventDefault();
+        }
+      } else {
+        if (e.cancelable) e.preventDefault();
+      }
+    }, { passive: false });
+
+    document.addEventListener('touchstart', function(e) {
+      const scrollable = e.target.closest('.text-section, .questions-section');
+      if (scrollable) {
+        scrollable.lastTouchY = e.touches[0].clientY;
+      }
+    }, { passive: false });
+
+    // --- БАЗА ИЗ 10 ЭТАЛОННЫХ ЗАДАЧ ---
+    const tasksData = [
+      {
+        id: 1,
+        text: `Семья Смирновых состоит из пяти человек: супругов Андрея и Анны и троих их сыновей. Супруги работают врачами в городской больнице. <span class="text-marker" id="m1">Средства семейного бюджета расходуются в первую очередь на приобретение еды, одежды, лекарств, оплату транспортных и коммунальных услуг</span>. Сбережения супруги <span class="text-marker" id="m2">размещают на срочном депозите в банке</span>. Андрей и Анна, состоящие 15 лет в зарегистрированном браке, решили заключить брачный договор. По обоюдному согласию они включили в него пункты <span class="text-marker" id="m3">об установлении режима долевой собственности на загородный дом, о правах и обязанностях по взаимному содержанию, а также о порядке несения семейных расходов</span>. <span class="text-marker" id="m4">Семья Смирновых состоит из представителей двух поколений прямых родственников – родителей и детей</span>.`,
+        questions: [
+          {
+            id: 'q1', text: 'Какую функцию семьи иллюстрирует процесс расходования средств на еду и коммунальные услуги?', markerId: 'm1',
+            options: [
+              { text: 'Репродуктивную', isCorrect: false, hint: 'репродуктивная функция отвечает за биологическое воспроизводство (рождение детей), а здесь речь идет о распределении бюджета и покупке товаров.' },
+              { text: 'Хозяйственно-экономическую (бытовую)', isCorrect: true, hint: '' },
+              { text: 'Социализирующую', isCorrect: false, hint: 'социализирующая функция связана с воспитанием детей и передачей им социальных норм, а не с оплатой счетов.' }
+            ]
+          },
+          {
+            id: 'q2', text: 'Почему семья Смирновых относится к нуклеарному типу?', markerId: 'm4',
+            options: [
+              { text: 'Потому что она является многодетной (трое сыновей)', isCorrect: false, hint: 'многодетность характеризует семью по количеству детей. Нуклеарный тип определяется не числом детей, а количеством поколений.' },
+              { text: 'Потому что она состоит из представителей только двух поколений (родителей и детей)', isCorrect: true, hint: '' },
+              { text: 'Потому что оба супруга работают и совместно формируют бюджет', isCorrect: false, hint: 'совместное формирование бюджета – это признак партнерской (демократической) семьи, а не нуклеарной.' }
+            ]
+          },
+          {
+            id: 'q3', text: 'Какие источники доходов семейного бюджета описаны в условии? (Назовите два типа).', markerId: 'm2',
+            options: [
+              { text: 'Заработная плата и проценты по депозиту', isCorrect: true, hint: '' },
+              { text: 'Пенсия и социальные пособия', isCorrect: false, hint: 'пенсия и пособия относятся к социальным трансфертам. В условии сказано, что супруги работают врачами (зарплата) и имеют депозит в банке (проценты).' },
+              { text: 'Предпринимательская прибыль и рента', isCorrect: false, hint: 'в тексте нет информации о том, что супруги владеют бизнесом (прибыль) или сдают недвижимость в аренду (рента).' }
+            ]
+          },
+          {
+            id: 'q4', text: 'Удостоверит ли нотариус брачный договор с указанными в тексте пунктами?', markerId: 'm3',
+            options: [
+              { text: 'Нет, так как брачный договор не может регулировать бытовые отношения супругов', isCorrect: false, hint: 'согласно Семейному кодексу РФ, супруги вправе определить в брачном договоре порядок несения семейных расходов.' },
+              { text: 'Да, так как предложенные пункты регулируют исключительно имущественные отношения', isCorrect: true, hint: '' },
+              { text: 'Нет, режим собственности можно изменить только через суд', isCorrect: false, hint: 'брачный договор как раз и создается для того, чтобы добровольно изменить законный режим совместной собственности на долевой или раздельный.' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 2,
+        text: `В государстве Y ежегодно растёт доля школьников, <span class="text-marker" id="m1">воспользовавшихся правом выбора наиболее удобной формы обучения в соответствии со своими целями и интересами</span>. Школьники и их родители отмечают общую ориентированность системы образования на развитие способностей учеников, сохранение и укрепление их здоровья. Государство создаёт условия для успешной реализации <span class="text-marker" id="m2">мировоззренческой функции образования</span>. Число желающих поступить в университеты неуклонно растёт, потому что <span class="text-marker" id="m3">наличие качественного образования и профессии позволяет гражданам повышать свой социальный статус, занимать более престижные места в иерархии</span>. Кроме того, в государстве Y отмечается рост интереса школьников к предметам <span class="text-marker" id="m4">естественно-научного цикла</span>.`,
+        questions: [
+          {
+            id: 'q1', text: 'Какая тенденция развития современного образования описана в тексте?', markerId: 'm1',
+            options: [
+              { text: 'Гуманитаризация образования', isCorrect: false, hint: 'гуманитаризация – это увеличение количества гуманитарных дисциплин (история, литература). Ориентация системы на интересы и здоровье ученика – это гуманизация.' },
+              { text: 'Интернационализация образования', isCorrect: false, hint: 'интернационализация предполагает сближение образовательных систем разных стран, обмен студентами. Об этом в тексте не сказано.' },
+              { text: 'Гуманизация образования', isCorrect: true, hint: '' }
+            ]
+          },
+          {
+            id: 'q2', text: 'Что характеризует мировоззренческую функцию образования?', markerId: 'm2',
+            options: [
+              { text: 'Передача профессиональных навыков для работы на производстве', isCorrect: false, hint: 'передача профессиональных навыков относится к экономической (или профессиональной) функции образования.' },
+              { text: 'Формирование у молодого поколения системы взглядов, ценностных установок и идеалов', isCorrect: true, hint: '' },
+              { text: 'Освоение учениками новых социальных ролей', isCorrect: false, hint: 'освоение новых социальных ролей – это суть социализирующей функции, а мировоззренческая отвечает за формирование целостной картины мира.' }
+            ]
+          },
+          {
+            id: 'q3', text: 'Какой факт в условии задачи иллюстрирует функцию образования как социального лифта?', markerId: 'm3',
+            options: [
+              { text: 'Наличие качественного образования позволяет гражданам повышать свой социальный статус', isCorrect: true, hint: '' },
+              { text: 'В государстве растет интерес к предметам естественно-научного цикла', isCorrect: false, hint: 'рост интереса к наукам отражает развитие познавательных потребностей общества, а не перемещение индивидов по социальной лестнице (лифт).' },
+              { text: 'Школьники получили право выбора наиболее удобной формы обучения', isCorrect: false, hint: 'выбор формы обучения иллюстрирует гуманизацию и демократизацию образования, но не описывает процесс вертикальной социальной мобильности.' }
+            ]
+          },
+          {
+            id: 'q4', text: 'Какие школьные предметы относят к естественно-научным?', markerId: 'm4',
+            options: [
+              { text: 'История, обществознание, право', isCorrect: false, hint: 'эти дисциплины изучают общество и человека, они относятся к социально-гуманитарному циклу наук.' },
+              { text: 'Физика, химия, биология', isCorrect: true, hint: '' },
+              { text: 'Алгебра, геометрия, информатика', isCorrect: false, hint: 'математика и информатика относятся к точным (или формальным) наукам, а естественные науки изучают природу.' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 3,
+        text: `Девятиклассник Дмитрий проживает с родителями. <span class="text-marker" id="m1">Ему недавно исполнилось 14 лет</span>. В свободное от учёбы время он решил устроиться на работу. По закону его обязанности должны предполагать <span class="text-marker" id="m2">лёгкий труд, не причиняющий вреда здоровью и без ущерба для освоения программы</span>. Перед заключением трудового договора подросток <span class="text-marker" id="m3">предоставил работодателю справку о прохождении обязательного медицинского осмотра</span>. После оформления всех документов он официально стал работником и теперь обязан <span class="text-marker" id="m4">добросовестно исполнять свои трудовые функции и соблюдать дисциплину</span>.`,
+        questions: [
+          {
+            id: 'q1', text: 'Чьё согласие (кроме сторон трудового договора) необходимо Дмитрию для трудоустройства?', markerId: 'm1',
+            options: [
+              { text: 'Одного из родителей (попечителя) и органа опеки и попечительства', isCorrect: true, hint: '' },
+              { text: 'Только письменное согласие обоих родителей', isCorrect: false, hint: 'по Трудовому кодексу РФ для лиц, достигших 14 лет, требуется обязательное согласие органа опеки и попечительства, а не только родителей.' },
+              { text: 'Согласие директора школы и классного руководителя', isCorrect: false, hint: 'образовательная организация не имеет полномочий давать согласие на трудоустройство учеников.' }
+            ]
+          },
+          {
+            id: 'q2', text: 'Каким трудом в соответствии с ТК РФ может заниматься 14-летний подросток?', markerId: 'm2',
+            options: [
+              { text: 'Любым неквалифицированным трудом продолжительностью не более 4 часов', isCorrect: false, hint: 'закон жестко ограничивает характер работы: несовершеннолетний не может выполнять тяжелую или вредную работу, даже если она длится 1 час.' },
+              { text: 'Лёгким трудом, не причиняющим вреда здоровью и без ущерба для освоения образовательной программы', isCorrect: true, hint: '' },
+              { text: 'Только трудом в государственных или муниципальных учреждениях', isCorrect: false, hint: 'подросток имеет право работать в коммерческих организациях (ООО, АО), если соблюдаются условия охраны его труда.' }
+            ]
+          },
+          {
+            id: 'q3', text: 'Как решается вопрос о медицинском осмотре при заключении договора с 14-летним работником?', markerId: 'm3',
+            options: [
+              { text: 'Осмотр проводится только при приеме на опасное производство', isCorrect: false, hint: 'несовершеннолетние вообще не допускаются к опасным условиям труда. Для них медосмотр обязателен при приеме на любую работу.' },
+              { text: 'Он обязан пройти предварительный медосмотр за счет своих родителей', isCorrect: false, hint: 'согласно ст. 266 Трудового кодекса РФ, обязательные медицинские осмотры несовершеннолетних всегда оплачиваются работодателем.' },
+              { text: 'Он подлежит обязательному предварительному медицинскому осмотру за счет работодателя', isCorrect: true, hint: '' }
+            ]
+          },
+          {
+            id: 'q4', text: 'Назовите прямую обязанность работника в соответствии с Трудовым кодексом РФ.', markerId: 'm4',
+            options: [
+              { text: 'Выполнять любые поручения руководителя организации', isCorrect: false, hint: 'работник обязан выполнять только те функции, которые строго закреплены в его трудовом договоре и должностной инструкции.' },
+              { text: 'Добросовестно исполнять свои трудовые обязанности и соблюдать трудовую дисциплину', isCorrect: true, hint: '' },
+              { text: 'Обеспечивать безопасность условий труда на своем рабочем месте', isCorrect: false, hint: 'обеспечение безопасности труда (покупка касок, проверка станков) – это прямая обязанность работодателя, а не работника.' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 4,
+        text: `Гражданин России С.В. Петров работает главным инженером на заводе. Он <span class="text-marker" id="m1">владеет на правах собственности двухкомнатной квартирой и загородным домом</span>. Ежегодно в установленные сроки он <span class="text-marker" id="m2">уплачивает налог на имущество физических лиц</span>. Помимо уплаты налогов, Петров <span class="text-marker" id="m3">добросовестно встал на учет в налоговом органе и ведет учет своих доходов</span>. В процессе уплаты налогов он регулярно взаимодействует с <span class="text-marker" id="m4">налоговыми агентами и таможенными органами</span>, которые также являются участниками налоговых правоотношений.`,
+        questions: [
+          {
+            id: 'q1', text: 'К какому виду налогов (по территории взимания) относится налог на имущество физических лиц?', markerId: 'm2',
+            options: [
+              { text: 'Федеральные налоги', isCorrect: false, hint: 'федеральные налоги (например, НДС или НДФЛ) поступают в федеральный бюджет, а налог на имущество физ. лиц собирается местными муниципалитетами.' },
+              { text: 'Региональные налоги', isCorrect: false, hint: 'налог на имущество организаций является региональным, а налог на имущество физических лиц – местным.' },
+              { text: 'Местные налоги', isCorrect: true, hint: '' }
+            ]
+          },
+          {
+            id: 'q2', text: 'Какие ещё налоги относятся к местным в соответствии с Налоговым кодексом РФ?', markerId: 'm2',
+            options: [
+              { text: 'Земельный налог и торговый сбор', isCorrect: true, hint: '' },
+              { text: 'Транспортный налог и налог на игорный бизнес', isCorrect: false, hint: 'эти налоги поступают в казну субъектов РФ, следовательно, они являются региональными налогами.' },
+              { text: 'Акцизы и государственная пошлина', isCorrect: false, hint: 'акцизы и госпошлина едины для всей страны и являются федеральными налогами и сборами.' }
+            ]
+          },
+          {
+            id: 'q3', text: 'Назовите другие обязанности налогоплательщика (помимо уплаты налога).', markerId: 'm3',
+            options: [
+              { text: 'Издавать местные законы о налогах и сборах', isCorrect: false, hint: 'правотворчество – это исключительная прерогатива органов государственной или муниципальной власти, а не граждан-налогоплательщиков.' },
+              { text: 'Встать на учёт в налоговых органах и вести учёт своих доходов', isCorrect: true, hint: '' },
+              { text: 'Требовать соблюдения налоговой тайны', isCorrect: false, hint: 'сохранение налоговой тайны – это право налогоплательщика, а вопрос требует указать его обязанности.' }
+            ]
+          },
+          {
+            id: 'q4', text: 'Кто ещё является участником отношений, регулируемых законодательством о налогах?', markerId: 'm4',
+            options: [
+              { text: 'Налоговые агенты и таможенные органы', isCorrect: true, hint: '' },
+              { text: 'Суды общей юрисдикции и прокуратура', isCorrect: false, hint: 'суды и прокуратура осуществляют правосудие и надзор, они не являются прямыми субъектами налоговых (финансовых) отношений по сбору средств.' },
+              { text: 'Коммерческие банки и страховые компании', isCorrect: false, hint: 'банки лишь проводят платежи, они не устанавливают и не администрируют налоги в рамках Налогового кодекса.' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 5,
+        text: `Максим предложил своему другу Олегу <span class="text-marker" id="m1">помощь с ремонтом автомобиля</span>, но в последний момент был вынужден срочно уехать в командировку. Олег сильно обиделся и <span class="text-marker" id="m2">перестал отвечать на телефонные звонки, игнорируя попытки Максима объясниться</span>. Оба друга <span class="text-marker" id="m3">тяжело переживали случившееся и находились в подавленном состоянии, ведь проблема осталась нерешенной</span>. Для разрешения ситуации им обоим предстоит <span class="text-marker" id="m4">проявить эмпатию, доброту и взаимоуважение</span>.`,
+        questions: [
+          {
+            id: 'q1', text: 'Какой способ поведения в межличностном конфликте иллюстрирует реакция Олега?', markerId: 'm2',
+            options: [
+              { text: 'Компромисс', isCorrect: false, hint: 'компромисс предполагает взаимные уступки и диалог сторон, а Олег полностью прекратил общение.' },
+              { text: 'Уход из конфликтной ситуации (избегание)', isCorrect: true, hint: '' },
+              { text: 'Сотрудничество', isCorrect: false, hint: 'сотрудничество – это совместный поиск решения, удовлетворяющего обе стороны, что невозможно при игнорировании звонков.' }
+            ]
+          },
+          {
+            id: 'q2', text: 'Почему данный способ поведения (уход) нельзя назвать эффективным?', markerId: 'm3',
+            options: [
+              { text: 'Потому что он приводит к материальным убыткам сторон', isCorrect: false, hint: 'в данном примере проблема носит эмоциональный и психологический характер, материальные убытки здесь не являются главной причиной неэффективности.' },
+              { text: 'Потому что причина конфликта не устранена, а участники тяжело переживают ситуацию', isCorrect: true, hint: '' },
+              { text: 'Потому что конфликт неизбежно приведет к судебному разбирательству', isCorrect: false, hint: 'межличностные дружеские конфликты крайне редко решаются в суде, это не правовой спор.' }
+            ]
+          },
+          {
+            id: 'q3', text: 'Каков наиболее эффективный способ разрешения этого конфликта?', markerId: 'm1',
+            options: [
+              { text: 'Открыто обсудить сложившуюся ситуацию, выяснить мотивы и наладить отношения', isCorrect: true, hint: '' },
+              { text: 'Заставить Олега извиниться за игнорирование звонков', isCorrect: false, hint: 'принуждение одной из сторон (подавление) только усугубит конфликт и окончательно разрушит дружеские связи.' },
+              { text: 'Обратиться к независимому арбитру для вынесения вердикта', isCorrect: false, hint: 'в личных и дружеских отношениях привлечение формального арбитра избыточно, стороны способны договориться сами (сотрудничество).' }
+            ]
+          },
+          {
+            id: 'q4', text: 'Какие личностные качества необходимо проявить друзьям, чтобы разрешить конфликт?', markerId: 'm4',
+            options: [
+              { text: 'Бескомпромиссность и настойчивость', isCorrect: false, hint: 'эти качества хороши для достижения жесткой бизнес-цели, но в дружбе они ведут к эскалации конфликта.' },
+              { text: 'Взаимоуважение, доброту и готовность слушать', isCorrect: true, hint: '' },
+              { text: 'Хладнокровие и рациональный эгоизм', isCorrect: false, hint: 'эгоизм заставляет учитывать только собственные интересы, что делает невозможным восстановление разрушенных отношений.' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 6,
+        text: `В государстве Z активно развиваются наукоёмкие производства и средства коммуникации, <span class="text-marker" id="m1">в структуре экономики высока доля сферы услуг, а основные процессы компьютеризированы</span>. Основой экономики являются <span class="text-marker" id="m2">частная собственность и свободная конкуренция производителей</span>. В политической сфере <span class="text-marker" id="m3">законодательную власть осуществляет парламент, а всенародно избираемый глава государства единолично формирует правительство</span>. В государстве применяется система, при которой <span class="text-marker" id="m4">избранным считается кандидат, набравший большинство голосов в своем округе</span>.`,
+        questions: [
+          {
+            id: 'q1', text: 'К какому типу относится общество государства Z?', markerId: 'm1',
+            options: [
+              { text: 'К постиндустриальному (информационному)', isCorrect: true, hint: '' },
+              { text: 'К индустриальному', isCorrect: false, hint: 'в индустриальном обществе основой является тяжелая промышленность, а здесь преобладает сфера услуг и компьютеризация.' },
+              { text: 'К традиционному', isCorrect: false, hint: 'традиционное общество базируется на сельском хозяйстве и ручном труде.' }
+            ]
+          },
+          {
+            id: 'q2', text: 'К какому типу относится экономика государства Z?', markerId: 'm2',
+            options: [
+              { text: 'К командно-административной (плановой)', isCorrect: false, hint: 'при плановой экономике господствует государственная собственность и директивное ценообразование, конкуренции нет.' },
+              { text: 'К рыночной', isCorrect: true, hint: '' },
+              { text: 'К традиционной', isCorrect: false, hint: 'традиционная экономика строится на обычаях и натуральном хозяйстве, а в тексте описана развитая конкуренция частных производителей.' }
+            ]
+          },
+          {
+            id: 'q3', text: 'Какова форма правления государства Z? (Дайте полное название)', markerId: 'm3',
+            options: [
+              { text: 'Парламентская республика', isCorrect: false, hint: 'в парламентской республике правительство формируется парламентом, а в условии сказано, что его формирует глава государства.' },
+              { text: 'Республика', isCorrect: false, hint: 'эксперты ФИПИ не засчитывают неполный ответ. Требуется указать конкретный вид республики в зависимости от полномочий президента.' },
+              { text: 'Президентская республика', isCorrect: true, hint: '' }
+            ]
+          },
+          {
+            id: 'q4', text: 'К какому типу относится избирательная система государства Z?', markerId: 'm4',
+            options: [
+              { text: 'Мажоритарная избирательная система', isCorrect: true, hint: '' },
+              { text: 'Пропорциональная избирательная система', isCorrect: false, hint: 'пропорциональная система предполагает голосование за списки политических партий в едином округе, а голосование за кандидата-победителя – это признак мажоритарной системы.' },
+              { text: 'Смешанная избирательная система', isCorrect: false, hint: 'в смешанной системе часть депутатов избирается по спискам, а часть по округам. В условии описан чистый принцип большинства голосов.' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 7,
+        text: `Гражданин России И.В. Соколов работает инженером на химическом комбинате. <span class="text-marker" id="m1">Уставный капитал данного предприятия разделён на определённое число ценных бумаг</span>, владельцы которых, в том числе Соколов, <span class="text-marker" id="m2">ежегодно получают часть прибыли в виде дивидендов</span>. Соколов и другие совладельцы несут <span class="text-marker" id="m3">риск убытков, связанных с деятельностью предприятия, но не отвечают по его долгам личным имуществом</span>. При этом на Соколова, заключившего трудовой договор, <span class="text-marker" id="m4">законом возложены определенные дисциплинарные обязанности</span>.`,
+        questions: [
+          {
+            id: 'q1', text: 'Какова организационно-правовая форма данного предприятия?', markerId: 'm1',
+            options: [
+              { text: 'Производственный кооператив (артель)', isCorrect: false, hint: 'в производственном кооперативе уставный капитал делится на паи, а личное трудовое участие обязательно. Ценные бумаги (акции) выпускают только АО.' },
+              { text: 'Акционерное общество (АО)', isCorrect: true, hint: '' },
+              { text: 'Общество с ограниченной ответственностью (ООО)', isCorrect: false, hint: 'в ООО капитал делится на доли, а не на ценные бумаги, обращающиеся на рынке.' }
+            ]
+          },
+          {
+            id: 'q2', text: 'Как владельцы ценных бумаг несут риск убытков данного предприятия?', markerId: 'm3',
+            options: [
+              { text: 'Солидарно всем своим личным имуществом', isCorrect: false, hint: 'такую полную ответственность несут участники полного товарищества. Акционеры личным имуществом (квартирами, машинами) не рискуют.' },
+              { text: 'В пределах стоимости принадлежащих им ценных бумаг (акций)', isCorrect: true, hint: '' },
+              { text: 'Риск убытков полностью берет на себя государство', isCorrect: false, hint: 'акционерное общество – это коммерческая организация, государство не покрывает убытки частных инвесторов.' }
+            ]
+          },
+          {
+            id: 'q3', text: 'Отвечают ли акционеры по обязательствам (долгам) данного предприятия?', markerId: 'm3',
+            options: [
+              { text: 'Да, в равных долях в зависимости от количества акций', isCorrect: false, hint: 'юридическое лицо (АО) самостоятельно отвечает по своим долгам. Акционеры могут лишь потерять вложенные в акции деньги, но не выплачивают долги компании.' },
+              { text: 'Нет, не отвечают', isCorrect: true, hint: '' },
+              { text: 'Да, если предприятие объявляется банкротом', isCorrect: false, hint: 'даже при банкротстве долги компании гасятся за счет её собственных активов, а не за счет личных средств акционеров.' }
+            ]
+          },
+          {
+            id: 'q4', text: 'Какие обязанности возложены на И.В. Соколова как на работника по Трудовому кодексу РФ?', markerId: 'm4',
+            options: [
+              { text: 'Обеспечивать выплату дивидендов другим работникам', isCorrect: false, hint: 'выплата дивидендов – это компетенция собрания акционеров и совета директоров, а не трудовая обязанность инженера.' },
+              { text: 'Добросовестно выполнять трудовые обязанности и соблюдать трудовую дисциплину', isCorrect: true, hint: '' },
+              { text: 'Обеспечивать безопасность условий труда на комбинате', isCorrect: false, hint: 'обеспечение безопасных условий труда – это прямая обязанность работодателя, закрепленная в ст. 22 ТК РФ.' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 8,
+        text: `В государстве Z число желающих поступить в университеты неуклонно растёт, так как качественное образование служит <span class="text-marker" id="m1">мощным социальным лифтом для граждан</span>. В условиях инновационного развития экономики <span class="text-marker" id="m2">образование становится непрерывным на протяжении всей жизни человека</span>. Правительство государства Z <span class="text-marker" id="m3">активно сотрудничает с соседними странами по вопросу объединения национальных систем образования и взаимного признания дипломов</span>. Кроме того, учащиеся и их родители высоко оценивают <span class="text-marker" id="m4">тенденцию гуманизации образования</span>.`,
+        questions: [
+          {
+            id: 'q1', text: 'Какая тенденция образования описана в факте объединения образовательных систем?', markerId: 'm3',
+            options: [
+              { text: 'Демократизация', isCorrect: false, hint: 'демократизация – это обеспечение равного доступа к образованию для всех слоев населения, независимо от дохода.' },
+              { text: 'Интернационализация', isCorrect: true, hint: '' },
+              { text: 'Информатизация', isCorrect: false, hint: 'информатизация связана с внедрением компьютеров и дистанционных технологий обучения.' }
+            ]
+          },
+          {
+            id: 'q2', text: 'Как в учебном процессе может проявляться тенденция гуманизации образования?', markerId: 'm4',
+            options: [
+              { text: 'Через увеличение количества уроков истории и обществознания', isCorrect: false, hint: 'увеличение доли гуманитарных предметов – это тенденция гуманитаризации, а не гуманизации.' },
+              { text: 'Через повышение внимания школы к личности ученика, его интересам и сбережению здоровья', isCorrect: true, hint: '' },
+              { text: 'Через введение единых строгих стандартов формы одежды', isCorrect: false, hint: 'строгие стандарты и унификация противоречат принципам гуманизации, которая делает акцент на индивидуальности.' }
+            ]
+          },
+          {
+            id: 'q3', text: 'Почему в условиях инновационной экономики образование становится непрерывным?', markerId: 'm2',
+            options: [
+              { text: 'Из-за быстрого устаревания знаний и необходимости осваивать новые технологии', isCorrect: true, hint: '' },
+              { text: 'Из-за увеличения средней продолжительности жизни людей', isCorrect: false, hint: 'продолжительность жизни растет, но сама по себе она не заставляет человека учиться. Учиться заставляют меняющиеся требования рынка труда.' },
+              { text: 'Из-за роста числа государственных школ и университетов', isCorrect: false, hint: 'увеличение количества школ – это следствие государственной политики, а причиной непрерывности является технологический прогресс.' }
+            ]
+          },
+          {
+            id: 'q4', text: 'Какой факт в условии задачи иллюстрирует функцию образования как социального лифта?', markerId: 'm1',
+            options: [
+              { text: 'Университеты активно внедряют инновационные методы обучения', isCorrect: false, hint: 'это факт описывает внутренние процессы образования, а не его влияние на социальную структуру общества.' },
+              { text: 'Наличие образования позволяет гражданам повышать свой социальный статус в иерархии', isCorrect: true, hint: '' },
+              { text: 'Правительство признает дипломы соседних государств', isCorrect: false, hint: 'признание дипломов – это проявление интернационализации, облегчающее миграцию, но сам по себе лифт описан в другой фразе.' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 9,
+        text: `Гражданин России Алексей работает токарем на заводе. За выполнение работы он <span class="text-marker" id="m1">ежемесячно получает фиксированную сумму денежных средств согласно своему окладу</span>. Из его дохода <span class="text-marker" id="m2">ежемесячно происходит обязательное удержание налога на доходы физических лиц (НДФЛ)</span> в бюджет государства. Оставшиеся сбережения Алексей <span class="text-marker" id="m3">размещает на срочном банковском вкладе</span>, чтобы уберечь их от обесценивания из-за инфляции, которая <span class="text-marker" id="m4">характеризуется устойчивым ростом общего уровня цен на товары и услуги</span>.`,
+        questions: [
+          {
+            id: 'q1', text: 'Какую форму (систему) оплаты труда иллюстрирует приведённый пример?', markerId: 'm1',
+            options: [
+              { text: 'Сдельную оплату труда', isCorrect: false, hint: 'при сдельной оплате доход работника зависит от количества произведенной им продукции (штук деталей), а Алексей получает фиксированную сумму.' },
+              { text: 'Повременную оплату труда (оклад)', isCorrect: true, hint: '' },
+              { text: 'Аккордную оплату труда', isCorrect: false, hint: 'аккордная оплата выплачивается за комплексное выполнение определенного объема работ к заданному сроку.' }
+            ]
+          },
+          {
+            id: 'q2', text: 'К какому виду налогов по территории взимания относится НДФЛ?', markerId: 'm2',
+            options: [
+              { text: 'К местным налогам', isCorrect: false, hint: 'местные налоги (например, земельный налог) взимаются муниципалитетами. НДФЛ регулируется на высшем уровне.' },
+              { text: 'К федеральным налогам', isCorrect: true, hint: '' },
+              { text: 'К региональным налогам', isCorrect: false, hint: 'к региональным налогам относится транспортный налог или налог на имущество организаций, но не НДФЛ.' }
+            ]
+          },
+          {
+            id: 'q3', text: 'Какие ещё налоги относятся к федеральным в соответствии с НК РФ?', markerId: 'm2',
+            options: [
+              { text: 'Налог на добавленную стоимость (НДС) и акцизы', isCorrect: true, hint: '' },
+              { text: 'Транспортный налог и налог на игорный бизнес', isCorrect: false, hint: 'эти налоги пополняют бюджеты субъектов РФ и являются региональными налогами.' },
+              { text: 'Торговый сбор и налог на имущество физических лиц', isCorrect: false, hint: 'данные сборы и налоги относятся к местному (муниципальному) уровню.' }
+            ]
+          },
+          {
+            id: 'q4', text: 'Что отличает срочный банковский вклад от вклада до востребования?', markerId: 'm3',
+            options: [
+              { text: 'По срочному вкладу банк не выплачивает проценты клиенту', isCorrect: false, hint: 'наоборот, по срочным вкладам банки выплачивают наиболее высокие проценты, так как могут свободно распоряжаться этими деньгами установленный срок.' },
+              { text: 'Срочный вклад вносится на строго определённый срок и приносит более высокий процент дохода', isCorrect: true, hint: '' },
+              { text: 'Срочный вклад можно забрать в любую минуту без потери начисленных процентов', isCorrect: false, hint: 'это характеристика вклада до востребования (высокая ликвидность). При досрочном снятии срочного вклада проценты, как правило, сгорают.' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 10,
+        text: `Гражданину России Николаю, <span class="text-marker" id="m1">представителю коренного малочисленного народа Севера, исполнилось 18 лет</span>. Он с самого рождения живёт в тундре и занимается <span class="text-marker" id="m2">традиционными для его народа оленеводческими промыслами</span>. Николай подлежит призыву, но Конституция РФ предоставляет ему <span class="text-marker" id="m3">особое право на замену военной службы альтернативным вариантом</span>. Если бы он проходил обычную службу по призыву, её <span class="text-marker" id="m4">срок составил бы ровно 12 месяцев</span>. Кроме защиты Отечества, Николай обязан соблюдать и другие конституционные нормы.`,
+        questions: [
+          {
+            id: 'q1', text: 'Какое право, связанное с защитой Отечества, предоставляется Николаю?', markerId: 'm1',
+            options: [
+              { text: 'Право на полную отсрочку от призыва до 27 лет', isCorrect: false, hint: 'отсрочка предоставляется по учебе или семейным обстоятельствам, а представители коренных народов имеют право на замену формы несения службы.' },
+              { text: 'Право на замену военной службы альтернативной гражданской службой (АГС)', isCorrect: true, hint: '' },
+              { text: 'Право проходить военную службу по контракту с 18 лет', isCorrect: false, hint: 'контракт – это профессиональная деятельность, а специфика малых народов дает им конституционное право именно на АГС.' }
+            ]
+          },
+          {
+            id: 'q2', text: 'Какой ещё категории граждан предоставляется право на АГС?', markerId: 'm3',
+            options: [
+              { text: 'Гражданам, имеющим двух и более несовершеннолетних детей', isCorrect: false, hint: 'наличие двух детей дает право на полное освобождение от призыва в мирное время, а не на АГС.' },
+              { text: 'Гражданам, чьим убеждениям или вероисповеданию противоречит несение военной службы', isCorrect: true, hint: '' },
+              { text: 'Студентам очных отделений высших учебных заведений', isCorrect: false, hint: 'студентам предоставляется временная отсрочка на период обучения, а не замена военной службы на гражданскую.' }
+            ]
+          },
+          {
+            id: 'q3', text: 'Какова продолжительность обычной военной службы по призыву в РФ?', markerId: 'm4',
+            options: [
+              { text: '18 месяцев', isCorrect: false, hint: 'срок службы по призыву был сокращен до 1 года еще в 2008 году.' },
+              { text: '12 месяцев (1 год)', isCorrect: true, hint: '' },
+              { text: '21 месяц', isCorrect: false, hint: '21 месяц – это срок прохождения альтернативной гражданской службы (АГС), а обычной военной – 12 месяцев.' }
+            ]
+          },
+          {
+            id: 'q4', text: 'Какие ещё обязанности гражданина (кроме защиты Отечества) устанавливает Конституция РФ?', markerId: 'm3',
+            options: [
+              { text: 'Участвовать в политических выборах и референдумах', isCorrect: false, hint: 'участие в выборах – это неотъемлемое политическое право гражданина, но не его юридическая обязанность.' },
+              { text: 'Соблюдать законы, платить установленные налоги и сборы, сохранять природу', isCorrect: true, hint: '' },
+              { text: 'Получить высшее профессиональное образование', isCorrect: false, hint: 'согласно Конституции, обязательным является получение только основного общего образования (9 классов).' }
+            ]
+          }
+        ]
+      }
+    ];
+
+    let currentTheme = 'light';
+    let currentTaskIndex = 0;
+    let solvedCount = 0;
+
+    // --- РЕНДЕР И ЛОГИКА ---
+    function loadTask(index) {
+      const task = tasksData[index];
+      solvedCount = 0;
+      
+      document.getElementById('task-title-ui').textContent = `Задача ${index + 1} из ${tasksData.length}`;
+      document.getElementById('score').textContent = solvedCount;
+      document.getElementById('case-text').innerHTML = task.text;
+      
+      // Скрываем экран победы, если был открыт
+      document.getElementById('victory-screen').classList.remove('active');
+
+      const qContainer = document.getElementById('questions-container');
+      qContainer.innerHTML = ''; // Очистка старых вопросов
+
+      task.questions.forEach((q, qIndex) => {
+        const card = document.createElement('div');
+        card.className = 'q-card';
+        card.dataset.qid = q.id;
+        
+        let optionsHtml = q.options.map((opt, i) => `
+          <div class="option-wrapper">
+            <button class="option-btn" data-correct="${opt.isCorrect}">${opt.text}</button>
+            ${!opt.isCorrect ? `<div class="option-hint"><strong>Анализ ошибки:</strong> ${opt.hint}</div>` : ''}
+          </div>
+        `).join('');
+
+        card.innerHTML = `
+          <div class="q-header">
+            <div class="q-number">${qIndex + 1}</div>
+            <div class="q-title">${q.text}</div>
+            <svg class="q-icon"><use href="#icon-chevron-down"></use></svg>
+            <svg class="q-solved-mark" style="width: 24px; height: 24px;"><use href="#icon-check-circle"></use></svg>
+          </div>
+          <div class="q-body">
+            <div class="options-list">
+              ${optionsHtml}
+            </div>
+          </div>
+        `;
+        qContainer.appendChild(card);
+
+        const header = card.querySelector('.q-header');
+        header.addEventListener('click', () => {
+          if (card.classList.contains('is-solved')) return; 
+          
+          const isOpen = card.classList.contains('is-open');
+          document.querySelectorAll('.q-card').forEach(c => c.classList.remove('is-open'));
+          
+          if (!isOpen) {
+             card.classList.add('is-open');
+             setTimeout(() => {
+                card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+             }, 300);
+          }
+          if(navigator.vibrate) navigator.vibrate(10);
+        });
+
+        const btns = card.querySelectorAll('.option-btn');
+        btns.forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (card.classList.contains('is-solved')) return;
+
+            const isCorrect = btn.dataset.correct === 'true';
+            if (isCorrect) {
+              btn.classList.add('correct');
+              card.classList.remove('is-open');
+              card.classList.add('is-solved');
+              
+              const marker = document.getElementById(q.markerId);
+              if (marker) {
+                marker.classList.add('highlighted');
+                marker.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+
+              solvedCount++;
+              document.getElementById('score').textContent = solvedCount;
+              if(navigator.vibrate) navigator.vibrate(20);
+
+              if (solvedCount === task.questions.length) {
+                setTimeout(() => {
+                  document.getElementById('victory-screen').classList.add('active');
+                }, 800);
+              }
+            } else {
+              btn.classList.add('wrong');
+              
+              const hint = btn.nextElementSibling;
+              if (hint && hint.classList.contains('option-hint')) {
+                 card.querySelectorAll('.option-hint').forEach(h => h.classList.remove('show'));
+                 hint.classList.add('show');
+              }
+
+              if(navigator.vibrate) navigator.vibrate([50, 100]);
+              setTimeout(() => btn.classList.remove('wrong'), 500);
+            }
+          });
+        });
+      });
+      
+      document.querySelector('.q-card').classList.add('is-open');
+    }
+
+    // --- НАВИГАЦИЯ МЕЖДУ ЗАДАЧАМИ ---
+    document.getElementById('btn-prev').addEventListener('click', () => {
+      currentTaskIndex = (currentTaskIndex - 1 + tasksData.length) % tasksData.length;
+      loadTask(currentTaskIndex);
+    });
+
+    document.getElementById('btn-next').addEventListener('click', () => {
+      currentTaskIndex = (currentTaskIndex + 1) % tasksData.length;
+      loadTask(currentTaskIndex);
+    });
+    
+    document.getElementById('btn-victory-next').addEventListener('click', () => {
+      currentTaskIndex = (currentTaskIndex + 1) % tasksData.length;
+      loadTask(currentTaskIndex);
+    });
+
+    // --- СИСТЕМНЫЕ ФУНКЦИИ ---
+    const htmlEl = document.documentElement;
+    function requestFullScreenSafe() {
+      try {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+          if (htmlEl.requestFullscreen) htmlEl.requestFullscreen().catch(()=>{});
+          else if (htmlEl.webkitRequestFullscreen) htmlEl.webkitRequestFullscreen(); 
+        }
+      } catch (e) {}
+    }
+
+    document.getElementById('btn-fullscreen').addEventListener('click', () => {
+      try {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) requestFullScreenSafe();
+        else {
+          if (document.exitFullscreen) document.exitFullscreen();
+          else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        }
+      } catch (e) {}
+    });
+
+    const updateFullscreenIcon = () => {
+      const isFull = document.fullscreenElement || document.webkitFullscreenElement;
+      document.getElementById('icon-fullscreen-use').setAttribute('href', isFull ? '#icon-minimize' : '#icon-maximize');
+    };
+    document.addEventListener('fullscreenchange', updateFullscreenIcon);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
+
+    document.getElementById('btn-theme').addEventListener('click', () => {
+      currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+      htmlEl.setAttribute('data-theme', currentTheme);
+      document.getElementById('icon-theme-use').setAttribute('href', currentTheme === 'light' ? '#icon-moon' : '#icon-sun');
+    });
+
+    document.getElementById('btn-start').addEventListener('click', () => {
+      try { requestFullScreenSafe(); } catch (e) {}
+      const splashScreen = document.getElementById('splash-screen');
+      splashScreen.classList.add('hidden');
+      setTimeout(() => {
+        document.getElementById('app-ui').classList.add('visible');
+      }, 500);
+    });
+
+    // Инициализация первой задачи
+    loadTask(0);
+  </script>
+</body>
+</html>
