@@ -408,6 +408,45 @@
   </div>
 
   <script>
+    // --- WEB AUDIO API СИНТЕЗАТОР (МАЖОРНЫЙ АККОРД) ---
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx;
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new AudioContext();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+
+    function playSuccessSound() {
+        if (!audioCtx) return;
+        
+        // Аккорд До мажор (C4, E4, G4)
+        const frequencies = [261.63, 329.63, 392.00]; 
+        
+        frequencies.forEach(freq => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.type = 'sine'; // Мягкий синусоидальный звук
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            
+            // Огибающая громкости: быстрая атака, плавное затухание
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        });
+    }
+
     // --- АГРЕССИВНЫЙ ФИКС СКРОЛЛА ---
     document.addEventListener('touchmove', function(e) {
       if (e.touches.length > 1) return; 
@@ -830,11 +869,10 @@
       document.getElementById('score').textContent = solvedCount;
       document.getElementById('case-text').innerHTML = task.text;
       
-      // Скрываем экран победы, если был открыт
       document.getElementById('victory-screen').classList.remove('active');
 
       const qContainer = document.getElementById('questions-container');
-      qContainer.innerHTML = ''; // Очистка старых вопросов
+      qContainer.innerHTML = ''; 
 
       task.questions.forEach((q, qIndex) => {
         const card = document.createElement('div');
@@ -876,6 +914,7 @@
                 card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
              }, 300);
           }
+          // Легкая вибрация при открытии вопроса
           if(navigator.vibrate) navigator.vibrate(10);
         });
 
@@ -899,7 +938,10 @@
 
               solvedCount++;
               document.getElementById('score').textContent = solvedCount;
-              if(navigator.vibrate) navigator.vibrate(20);
+              
+              // ЗВУК И ВИБРАЦИЯ (УСПЕХ)
+              playSuccessSound();
+              if(navigator.vibrate) navigator.vibrate(30);
 
               if (solvedCount === task.questions.length) {
                 setTimeout(() => {
@@ -915,6 +957,7 @@
                  hint.classList.add('show');
               }
 
+              // ВИБРАЦИЯ И АНИМАЦИЯ SHAKE (ОШИБКА) БЕЗ ЗВУКА
               if(navigator.vibrate) navigator.vibrate([50, 100]);
               setTimeout(() => btn.classList.remove('wrong'), 500);
             }
@@ -925,7 +968,7 @@
       document.querySelector('.q-card').classList.add('is-open');
     }
 
-    // --- НАВИГАЦИЯ МЕЖДУ ЗАДАЧАМИ ---
+    // --- НАВИГАЦИЯ ---
     document.getElementById('btn-prev').addEventListener('click', () => {
       currentTaskIndex = (currentTaskIndex - 1 + tasksData.length) % tasksData.length;
       loadTask(currentTaskIndex);
@@ -977,6 +1020,9 @@
 
     document.getElementById('btn-start').addEventListener('click', () => {
       try { requestFullScreenSafe(); } catch (e) {}
+      // Инициализируем аудиоконтекст по ПЕРВОМУ клику пользователя
+      initAudio();
+      
       const splashScreen = document.getElementById('splash-screen');
       splashScreen.classList.add('hidden');
       setTimeout(() => {
@@ -984,7 +1030,7 @@
       }, 500);
     });
 
-    // Инициализация первой задачи
+    // Первичная инициализация UI
     loadTask(0);
   </script>
 </body>
